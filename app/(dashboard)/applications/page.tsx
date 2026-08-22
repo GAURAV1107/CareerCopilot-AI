@@ -94,6 +94,7 @@ export default function ApplicationsPage() {
   const [viewMode, setViewMode] = useState<"kanban" | "table">("kanban");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStage, setSelectedStage] = useState("ALL");
+  const [sortBy, setSortBy] = useState<"newest" | "oldest" | "score">("newest");
 
   // Modal Controls
   const [showAddModal, setShowAddModal] = useState(false);
@@ -481,20 +482,35 @@ export default function ApplicationsPage() {
           />
         </div>
 
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0">
-          <span className="text-[11px] font-semibold text-slate-400">Filter Stage:</span>
-          <select
-            value={selectedStage}
-            onChange={(e) => setSelectedStage(e.target.value)}
-            className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500"
-          >
-            <option value="ALL">All Pipeline Stages ({applications.length})</option>
-            {STAGES.map((s) => (
-              <option key={s} value={s}>
-                {s} ({applications.filter((a) => a.status === s).length})
-              </option>
-            ))}
-          </select>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-semibold text-slate-400">Sort Column Cards:</span>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as "newest" | "oldest" | "score")}
+              className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500 font-semibold"
+            >
+              <option value="newest">📅 Date: Newest First</option>
+              <option value="oldest">⌛ Date: Oldest First</option>
+              <option value="score">🎯 Highest Match Score</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-semibold text-slate-400">Filter Stage:</span>
+            <select
+              value={selectedStage}
+              onChange={(e) => setSelectedStage(e.target.value)}
+              className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500"
+            >
+              <option value="ALL">All Pipeline Stages ({applications.length})</option>
+              {STAGES.map((s) => (
+                <option key={s} value={s}>
+                  {s} ({applications.filter((a) => a.status === s).length})
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
@@ -502,7 +518,20 @@ export default function ApplicationsPage() {
       {viewMode === "kanban" ? (
         <div className="flex gap-4 overflow-x-auto pb-6 pt-2">
           {STAGES.map((stage) => {
-            const stageApps = filteredApps.filter((a) => a.status === stage);
+            const stageApps = filteredApps
+              .filter((a) => a.status === stage)
+              .sort((a, b) => {
+                if (sortBy === "oldest") {
+                  return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+                }
+                if (sortBy === "score") {
+                  const scoreA = a.jobMatches?.[0]?.overallScore || 0;
+                  const scoreB = b.jobMatches?.[0]?.overallScore || 0;
+                  return scoreB - scoreA;
+                }
+                // Default: Newest First
+                return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+              });
             return (
               <div
                 key={stage}
