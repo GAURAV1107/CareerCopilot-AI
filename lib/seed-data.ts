@@ -2,11 +2,16 @@ import { db } from "./db";
 import { hashPassword } from "./auth";
 
 export async function seedDemoData() {
-  const prodEmail = "manujendragaurav@gmail.com";
+  const prodEmail = "gauravmanujendra@gmail.com";
 
   // Check if seed user already exists
-  const existingUser = await db.user.findUnique({
-    where: { email: prodEmail },
+  const existingUser = await db.user.findFirst({
+    where: {
+      OR: [
+        { email: prodEmail },
+        { email: "manujendragaurav@gmail.com" }
+      ]
+    },
   });
 
   if (existingUser) {
@@ -29,52 +34,67 @@ export async function seedDemoData() {
   await db.userProfile.create({
     data: {
       userId: user.id,
-      phone: "+1 (555) 234-5678",
-      location: "San Francisco, CA (Remote)",
+      phone: "+91-9123243009",
+      location: "Bengaluru, India",
       linkedinUrl: "https://linkedin.com/in/manujendra-gaurav",
       portfolioUrl: "https://manujendragaurav.dev",
-      githubUrl: "https://github.com/manujendragaurav",
-      currentTitle: "Senior QA Automation Engineer",
-      yearsExperience: 6,
-      currentCompany: "NextGen Software",
+      githubUrl: "https://github.com/GAURAV1107",
+      currentTitle: "Senior QA Automation Engineer & AI-Driven Quality Engineering Specialist",
+      yearsExperience: 5.5,
+      currentCompany: "DataArt Technologies India Pvt Ltd",
       summary:
-        "Results-driven Senior QA Automation Engineer and SDET with 6 years of expertise designing robust test automation frameworks using Selenium, Playwright, Java, and Python. Specialized in API automation with RestAssured, CI/CD pipeline integration via Jenkins/GitHub Actions, and containerized test infrastructure with Docker.",
-      expectedSalary: "$140,000 - $165,000",
-      noticePeriod: "2 Weeks",
+        "Results-driven Senior QA Automation Engineer with 5.5+ years of experience designing and scaling AI-powered test automation solutions across web, API, and mobile platforms. Expert in building autonomous AI agents, custom skill files, and MCP server integrations to enable self-healing, intelligent test ecosystems. Proficient in Java, Python, Selenium, Playwright, Appium, and Robot Framework. Deep experience integrating CI/CD pipelines (Jenkins), cloud platforms (AWS, Docker), and AI tools (GitHub Copilot, Claude AI, ChatGPT, n8n) to accelerate delivery and improve software quality.",
+      expectedSalary: "₹24,000,000 - ₹30,000,000 / $150,000 - $175,000",
+      noticePeriod: "Immediate / 1 Month",
       preferredTitles: JSON.stringify([
         "Senior QA Automation Engineer",
+        "AI-Driven Quality Engineering Specialist",
         "Software Development Engineer in Test (SDET)",
-        "Lead QA Engineer",
-        "Automation Architect",
+        "Automation Lead",
       ]),
-      preferredLocations: "San Francisco, CA; San Jose, CA; Remote USA",
+      preferredLocations: "Bengaluru, India; Remote",
       remotePreference: "Remote",
       employmentType: "Full-time",
-      expectedSalaryMin: 140000,
-      expectedSalaryMax: 165000,
+      expectedSalaryMin: 150000,
+      expectedSalaryMax: 175000,
     },
   });
 
   // 3. Create Skills
   const qaSkills = [
-    { name: "Selenium", category: "Automation" },
-    { name: "Playwright", category: "Automation" },
-    { name: "Cypress", category: "Automation" },
-    { name: "Java", category: "Programming" },
-    { name: "Python", category: "Programming" },
-    { name: "JavaScript", category: "Programming" },
-    { name: "TypeScript", category: "Programming" },
-    { name: "RestAssured", category: "API Testing" },
-    { name: "Postman", category: "API Testing" },
-    { name: "API Testing", category: "API Testing" },
-    { name: "SQL", category: "Database" },
-    { name: "Jenkins", category: "CI/CD" },
-    { name: "GitHub Actions", category: "CI/CD" },
-    { name: "Docker", category: "Cloud & Ops" },
-    { name: "Kubernetes", category: "Cloud & Ops" },
-    { name: "AWS", category: "Cloud & Ops" },
-    { name: "JMeter", category: "Performance" },
-    { name: "k6", category: "Performance" },
+    { name: "Java", category: "Languages" },
+    { name: "Python", category: "Languages" },
+    { name: "SQL", category: "Languages" },
+    { name: "HTML/CSS", category: "Languages" },
+    { name: "AI Agent Development", category: "AI & Agents" },
+    { name: "MCP Server Integration", category: "AI & Agents" },
+    { name: "Skill File Creation", category: "AI & Agents" },
+    { name: "Claude AI", category: "AI & Agents" },
+    { name: "GitHub Copilot", category: "AI & Agents" },
+    { name: "ChatGPT", category: "AI & Agents" },
+    { name: "n8n Workflow Automation", category: "AI & Agents" },
+    { name: "Self-Healing Test Automation", category: "AI & Agents" },
+    { name: "Selenium WebDriver", category: "Automation Frameworks" },
+    { name: "Playwright", category: "Automation Frameworks" },
+    { name: "Appium", category: "Automation Frameworks" },
+    { name: "Robot Framework", category: "Automation Frameworks" },
+    { name: "Rest Assured", category: "Automation Frameworks" },
+    { name: "RequestsLibrary", category: "Automation Frameworks" },
+    { name: "Pytest", category: "Automation Frameworks" },
+    { name: "TestNG", category: "Automation Frameworks" },
+    { name: "Pabot", category: "Automation Frameworks" },
+    { name: "Jenkins", category: "CI/CD & DevOps" },
+    { name: "GitLab CI", category: "CI/CD & DevOps" },
+    { name: "Docker", category: "CI/CD & DevOps" },
+    { name: "AWS", category: "CI/CD & DevOps" },
+    { name: "Linux", category: "CI/CD & DevOps" },
+    { name: "Git / GitHub / Bitbucket", category: "CI/CD & DevOps" },
+    { name: "Postman", category: "API & Tools" },
+    { name: "REST API Testing", category: "API & Tools" },
+    { name: "GraphQL", category: "API & Tools" },
+    { name: "JIRA", category: "Project Management" },
+    { name: "Agile/Scrum", category: "Project Management" },
+    { name: "Maven", category: "Project Management" },
   ];
 
   for (const s of qaSkills) {
@@ -84,105 +104,108 @@ export async function seedDemoData() {
       create: s,
     });
 
-    if (
-      [
-        "Selenium",
-        "Java",
-        "Python",
-        "Playwright",
-        "API Testing",
-        "RestAssured",
-        "Jenkins",
-        "GitHub Actions",
-        "SQL",
-        "Docker",
-      ].includes(s.name)
-    ) {
-      await db.userSkill.upsert({
-        where: {
-          userId_skillId: {
-            userId: user.id,
-            skillId: skill.id,
-          },
-        },
-        update: {},
-        create: {
+    await db.userSkill.upsert({
+      where: {
+        userId_skillId: {
           userId: user.id,
           skillId: skill.id,
         },
-      });
-    }
+      },
+      update: {},
+      create: {
+        userId: user.id,
+        skillId: skill.id,
+      },
+    });
   }
 
   // 4. Create Primary Resume
+  const primaryResumeText = `MANUJENDRA GAURAV
+Senior QA Automation Engineer & AI-Driven Quality Engineering Specialist
+gauravmanujendra@gmail.com | +91-9123243009 | Bengaluru, India | LinkedIn
+
+PROFESSIONAL SUMMARY
+Results-driven Senior QA Automation Engineer with 5.5+ years of experience designing and scaling AI-powered test automation solutions across web, API, and mobile platforms. Expert in building autonomous AI agents, custom skill files, and MCP server integrations to enable self-healing, intelligent test ecosystems. Proficient in Java, Python, Selenium, Playwright, Appium, and Robot Framework. Deep experience integrating CI/CD pipelines (Jenkins), cloud platforms (AWS, Docker), and AI tools (GitHub Copilot, Claude AI, ChatGPT, n8n) to accelerate delivery and improve software quality. Proven leader who mentors teams and champions modern QA practices in Agile environments.
+
+TECHNICAL SKILLS
+Languages: Java, Python, SQL, HTML, CSS
+AI & Agents: AI Agent Development, MCP Server Integration, Skill File Creation, Claude AI, GitHub Copilot, ChatGPT, n8n Workflow Automation, Self-Healing Test Automation, AI-Driven Test Generation
+Automation Frameworks: Selenium WebDriver, Playwright, Appium, Robot Framework, Rest Assured, RequestsLibrary, Pytest, TestNG, Pabot
+CI/CD & DevOps: Jenkins, GitLab CI, Docker, AWS, Linux, Git, GitHub, Bitbucket
+API & Tools: Postman, REST API Testing, GraphQL
+Project Management: JIRA, Agile/Scrum, Maven, Word, Excel
+
+WORK EXPERIENCE
+Automation Engineer — AI & Quality Engineering
+DataArt Technologies India Pvt Ltd · Bengaluru | September 2025 – Present
+• Architect and deploy AI agents and MCP server integrations to enable autonomous test execution, defect triage, and intelligent reporting pipelines.
+• Design custom skill files for AI-assisted test generation, reducing new test authoring time by ~40%.
+• Build scalable automation frameworks for web and API testing using Playwright (Python) and RequestsLibrary with self-healing locator strategies.
+• Integrate GitHub Copilot and ChatGPT into the SDLC to accelerate script development, code reviews, and root-cause analysis.
+• Implement n8n workflow automation to orchestrate test triggers, Slack notifications, and JIRA ticket creation.
+• Engineer intelligent CI/CD quality gates in Jenkins, reducing defect escape rate by 30%.
+• Mentor 4+ engineers on AI tooling adoption, modern automation patterns, and clean-code practices.
+
+Project Lead – Quality Automation Engineer
+Persistent Systems · Bengaluru | April 2024 – September 2025
+• Built an end-to-end mobile automation framework from scratch using Robot Framework + Appium, achieving 85% test automation coverage.
+• Reduced manual testing effort by 60% through parallel execution with Pabot and a Jenkins CI pipeline.
+• Led migration to a new quality management system, ensuring zero regression impact during cutover.
+• Introduced AI-assisted defect prediction reports, improving sprint planning accuracy.
+• Mentored and onboarded new automation engineers, establishing team coding standards and review processes.
+
+Senior SDET
+TAO Digital · Bengaluru | August 2023 – December 2023
+• Automated functional, regression, smoke, and sanity test suites across multiple product lines.
+• Drove root-cause analysis and contributed to a 25% reduction in production defects.
+• Documented engineering procedures and mentored junior SDETs on framework best practices.
+
+Senior SDET
+Brillio Technology · Bengaluru | October 2022 – July 2023
+• Developed a Robot Framework-based UI and API automation framework from scratch, improving coverage by 50%.
+• Implemented parallel test execution and CI pipeline integration, cutting test run time by 45%.
+• Ensured product stability through comprehensive regression and smoke testing across release cycles.
+
+Senior Engineer – Testing
+Capgemini · Bengaluru | December 2020 – October 2022
+• Designed and automated functional, regression, smoke, and sanity test cases across diverse enterprise projects.
+• Led successful transition to a new quality management system with minimal disruption.
+• Assisted in root-cause analysis, contributing to improved product quality and release confidence.
+
+KEY PROJECTS
+Yield Book API (DataArt): Automated validation of fixed-income analytics APIs using Python RequestsLibrary; integrated AI-assisted test generation with GitHub Copilot and Claude AI to enhance accuracy and coverage for complex financial calculations.
+Sync – Frontline Worker Platform (Persistent): Delivered mobile automation coverage for a real-time push-to-talk/video communication platform used in retail, healthcare, and manufacturing via Appium + Robot Framework. Leveraged Claude AI and GitHub Copilot to auto-generate test cases for complex multi-device communication flows, reducing test authoring time by 35%. Used AI-driven analysis to identify flaky tests and implement self-healing locator strategies, improving suite stability.
+Al-Muzaini Exchange Application: Automated end-to-end money exchange transaction flows, including dynamic API generation and bank server integration validation, ensuring data integrity across all transaction states.
+Jenkins 2.0 – Life Sciences (Capgemini): Tested clinical trial management modules (SSP/F, PMD, TEM) covering planning, drug provisioning, and temperature monitoring during shipment.
+Access Unification – Verizon: Validated consolidation of customer LEC access circuits to reduce infrastructure costs, ensuring seamless migration and regression stability.
+
+EDUCATION & CERTIFICATIONS
+B.Tech – Electronics & Communication Engineering | The Techno School, Bhubaneswar (BPUT) | CGPA: 7.9 / 10
+Professional Certifications: View all certifications on Google Drive Link
+
+ACHIEVEMENT
+■ Value Champion Award — recognised for outstanding contribution to team quality and automation initiatives.`;
+
   const primaryResume = await db.resume.create({
     data: {
       userId: user.id,
-      filename: "Manujendra_Gaurav_SDET_Resume_2026.pdf",
-      originalName: "Manujendra_Gaurav_SDET_Resume_2026.pdf",
+      filename: "Manujendra_Gaurav_AI_Quality_Engineer_Resume.pdf",
+      originalName: "Manujendra_Gaurav_AI_Quality_Engineer_Resume.pdf",
       fileType: "pdf",
       fileUrl: "/sample-resumes/manujendra_gaurav_resume.pdf",
-      fileSize: 245000,
+      fileSize: 285000,
       isPrimary: true,
-      notes: "Primary general resume tailored for Senior SDET and QA Lead roles.",
+      notes: "Official Master Resume - Senior QA Automation Engineer & AI-Driven Quality Engineering Specialist",
       extractedSkills: JSON.stringify([
-        "Selenium",
-        "Playwright",
-        "Java",
-        "Python",
-        "RestAssured",
-        "API Testing",
-        "SQL",
-        "Jenkins",
-        "GitHub Actions",
-        "Docker",
-        "JUnit",
-        "TestNG",
-        "Cucumber",
-        "Git",
+        "Java", "Python", "SQL", "Selenium", "Playwright", "Appium", "Robot Framework", "Rest Assured",
+        "AI Agent Development", "MCP Server Integration", "Claude AI", "GitHub Copilot", "ChatGPT", "n8n",
+        "Jenkins", "Docker", "AWS", "JIRA", "Postman", "Pytest"
       ]),
-      parsedText: `MANUJENDRA GAURAV
-Senior QA Automation Engineer / SDET
-Email: manujendragaurav@gmail.com | Phone: +1 (555) 234-5678 | San Francisco, CA
-
-SUMMARY
-Senior SDET with 6 years of experience building scalable test automation frameworks for web apps, microservices, and distributed backend systems. Hands-on experience in Java, Python, Selenium WebDriver, Playwright, and RestAssured. Expertise in CI/CD automation with Jenkins & GitHub Actions.
-
-SKILLS
-- Automation Frameworks: Selenium WebDriver, Playwright, RestAssured, Cypress
-- Languages: Java, Python, TypeScript, SQL
-- DevOps & Tools: Jenkins, Docker, GitHub Actions, Git, Postman, JMeter
-- Methodologies: Agile/Scrum, BDD (Cucumber), TDD, API Test Strategy
-
-WORK EXPERIENCE
-Senior QA Automation Engineer — NextGen Software (2023 - Present)
-• Built end-to-end UI automation suite using Java, Selenium WebDriver, and TestNG, reducing regression execution time by 65%.
-• Engineered automated API testing framework using RestAssured integrated into GitHub Actions CI pipeline.
-• Dockerized execution grids with Selenium Grid & Selenoid to enable parallel cross-browser execution on 50+ concurrent nodes.
-
-SDET — TechCorp Solutions (2020 - 2023)
-• Developed Python & PyTest backend test suite for REST microservices with 90%+ code coverage.
-• Implemented continuous test triggers in Jenkins for nightly automated execution and Slack alerts.
-• Authored complex SQL scripts to validate data integrity across PostgreSQL and MySQL databases.`,
+      parsedText: primaryResumeText,
     },
   });
 
-  // Secondary resume
-  await db.resume.create({
-    data: {
-      userId: user.id,
-      filename: "Manujendra_Gaurav_Playwright_Specialist.pdf",
-      originalName: "Manujendra_Gaurav_Playwright_Specialist.pdf",
-      fileType: "pdf",
-      fileUrl: "/sample-resumes/manujendra_gaurav_playwright.pdf",
-      fileSize: 210000,
-      isPrimary: false,
-      notes: "Tailored specifically for TypeScript & Playwright modern frontend web automation roles.",
-      extractedSkills: JSON.stringify(["Playwright", "TypeScript", "JavaScript", "Cypress", "Node.js", "Docker", "GitHub Actions"]),
-    },
-  });
-
-  // 5. Create Sample Jobs
+  // 5. Create Sample Jobs matching candidate profile
   const job1 = await db.job.create({
     data: {
       userId: user.id,
@@ -190,225 +213,61 @@ SDET — TechCorp Solutions (2020 - 2023)
       companyWebsite: "https://cloudscale.example.com",
       jobTitle: "Senior Software Development Engineer in Test (SDET)",
       description: `About the Role:
-We are looking for a Senior SDET to lead our quality automation initiatives. You will design, build, and maintain enterprise automation frameworks for high-throughput SaaS web applications and REST APIs.
-
+We are seeking a Senior SDET & AI Quality Engineer to lead automated testing initiatives.
 Key Responsibilities:
-- Design hybrid test automation frameworks using Selenium, Java, and Playwright.
-- Build automated API regression suites with RestAssured or Postman.
-- Integrate automated execution into Jenkins and GitHub Actions CI pipelines.
-- Deploy containerized grid execution infrastructure using Docker.
-- Collaborate with developers in Agile sprints to ensure high testability.
-
-Requirements:
-- 5+ years of experience in Software Test Automation or SDET roles.
-- Expert-level proficiency in Java or Python.
-- Deep knowledge of Selenium, Playwright, API testing, and SQL.
-- Solid experience with Docker, Jenkins, and Git.`,
+- Design hybrid test automation frameworks using Selenium, Playwright, Python, and Java.
+- Integrate AI tools (GitHub Copilot, Claude AI, ChatGPT) into testing pipelines for self-healing tests.
+- Build automated REST API test suites using RestAssured and RequestsLibrary.
+- Setup Jenkins CI/CD execution grids with Docker containers.`,
       jobUrl: "https://linkedin.com/jobs/view/1001",
-      location: "San Francisco, CA (Hybrid)",
-      salaryMin: 150000,
-      salaryMax: 175000,
-      currency: "USD",
-      employmentType: "Full-time",
-      workMode: "Hybrid",
-      source: "LinkedIn",
-      notes: "Great tech stack match! Applied through internal recruiter referral.",
-    },
-  });
-
-  const job2 = await db.job.create({
-    data: {
-      userId: user.id,
-      companyName: "DataStream AI",
-      companyWebsite: "https://datastream.example.com",
-      jobTitle: "Lead QA Automation Engineer",
-      description: `DataStream AI is scaling its real-time analytics engine. We need a Lead QA Automation Engineer with strong API automation and performance testing skills.
-
-Requirements:
-- 6+ years QA Automation experience.
-- Strong Java, Python, and SQL skills.
-- Experience with RestAssured, Postman, JMeter, and Docker.
-- Experience with Cloud infrastructure (AWS / Kubernetes) is preferred.`,
-      jobUrl: "https://indeed.com/viewjob?id=2002",
-      location: "Remote (USA)",
+      location: "Bengaluru, India (Hybrid / Remote)",
       salaryMin: 160000,
       salaryMax: 185000,
       currency: "USD",
       employmentType: "Full-time",
       workMode: "Remote",
-      source: "Indeed",
-      notes: "High salary range. Technical interview scheduled!",
-    },
-  });
-
-  const job3 = await db.job.create({
-    data: {
-      userId: user.id,
-      companyName: "FinTech Prime",
-      companyWebsite: "https://fintechprime.example.com",
-      jobTitle: "QA Automation Engineer",
-      description: `Seeking a QA Automation Engineer to automate financial transaction APIs and web portals. Required skills: Cypress, JavaScript, API Testing, SQL, CI/CD.`,
-      jobUrl: "https://fintechprime.example.com/careers/3003",
-      location: "New York, NY (Onsite)",
-      salaryMin: 135000,
-      salaryMax: 150000,
-      currency: "USD",
-      employmentType: "Full-time",
-      workMode: "Onsite",
-      source: "Company Website",
-    },
-  });
-
-  const job4 = await db.job.create({
-    data: {
-      userId: user.id,
-      companyName: "HyperVelocity Software",
-      companyWebsite: "https://hypervelocity.example.com",
-      jobTitle: "SDET II - Playwright & Cypress",
-      description: `HyperVelocity is hiring SDET II for our core web frontend test automation. Must know Playwright, TypeScript, Docker, and GitHub Actions.`,
-      jobUrl: "https://linkedin.com/jobs/view/4004",
-      location: "Remote",
-      salaryMin: 145000,
-      salaryMax: 165000,
-      currency: "USD",
-      employmentType: "Full-time",
-      workMode: "Remote",
       source: "LinkedIn",
     },
   });
 
-  // 6. Create Applications
   const app1 = await db.application.create({
     data: {
       userId: user.id,
       jobId: job1.id,
       resumeId: primaryResume.id,
       status: "Technical Interview",
-      appliedDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+      appliedDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
       recruiterName: "Sarah Jenkins",
       recruiterEmail: "sarah.jenkins@cloudscale.example.com",
-      notes: "Recruiter screen went great. Tech interview scheduled focusing on Java & Playwright framework design.",
       activities: {
         create: [
           { eventType: "Job Saved", description: "Saved job opportunity from LinkedIn" },
-          { eventType: "Resume Analyzed", description: "Ran AI match comparison with Primary Resume (88% Match Score)" },
-          { eventType: "Application Submitted", description: "Submitted application via CloudScale careers portal" },
-          { eventType: "Recruiter Contacted", description: "Sarah Jenkins reached out for preliminary screen" },
-          { eventType: "Interview Scheduled", description: "Technical Automation Round scheduled for upcoming Tuesday" },
+          { eventType: "Resume Analyzed", description: "Ran AI match comparison (94% Match Score)" },
+          { eventType: "Application Submitted", description: "Submitted application via portal" },
+          { eventType: "Interview Scheduled", description: "Technical Automation Round scheduled" },
         ],
       },
     },
   });
 
-  const app2 = await db.application.create({
-    data: {
-      userId: user.id,
-      jobId: job2.id,
-      resumeId: primaryResume.id,
-      status: "Screening",
-      appliedDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-      recruiterName: "David Miller",
-      recruiterEmail: "david.m@datastream.example.com",
-      activities: {
-        create: [
-          { eventType: "Job Saved", description: "Saved job opportunity from Indeed" },
-          { eventType: "Application Submitted", description: "Submitted resume and application" },
-          { eventType: "Recruiter Contacted", description: "Recruiter screening email received" },
-        ],
-      },
-    },
-  });
-
-  await db.application.create({
-    data: {
-      userId: user.id,
-      jobId: job3.id,
-      resumeId: primaryResume.id,
-      status: "Applied",
-      appliedDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-      activities: {
-        create: [
-          { eventType: "Job Saved", description: "Saved job from FinTech Prime portal" },
-          { eventType: "Application Submitted", description: "Applied on company website" },
-        ],
-      },
-    },
-  });
-
-  await db.application.create({
-    data: {
-      userId: user.id,
-      jobId: job4.id,
-      resumeId: primaryResume.id,
-      status: "Interested",
-      activities: {
-        create: [{ eventType: "Job Saved", description: "Saved role on LinkedIn" }],
-      },
-    },
-  });
-
-  // 7. Create Job Match Analysis
   await db.jobMatchAnalysis.create({
     data: {
       applicationId: app1.id,
       jobId: job1.id,
       resumeId: primaryResume.id,
-      overallScore: 88,
-      skillMatchScore: 92,
+      overallScore: 94,
+      skillMatchScore: 96,
       expMatchScore: 95,
-      semanticScore: 84,
-      locationScore: 90,
-      keywordScore: 80,
-      explanation:
-        "Strong match because you have extensive experience in Selenium, Java, API Automation (RestAssured), Jenkins, and SQL. Minor gap: Docker containerized grids mentioned in job description can be highlighted further.",
-      matchingSkills: JSON.stringify(["Selenium", "Playwright", "Java", "Python", "RestAssured", "API Testing", "SQL", "Jenkins", "GitHub Actions"]),
-      missingSkills: JSON.stringify(["Kubernetes", "AWS"]),
+      semanticScore: 92,
+      locationScore: 100,
+      keywordScore: 90,
+      explanation: "Exceptional match! 5.5+ years experience in Playwright, Python, AI Agents, RestAssured, and Jenkins directly matches all requirements.",
+      matchingSkills: JSON.stringify(["Selenium", "Playwright", "Python", "Java", "Rest Assured", "AI Agent Development", "Jenkins", "Docker"]),
+      missingSkills: JSON.stringify(["GraphQL"]),
     },
   });
 
-  // 8. Create Interviews
-  await db.interview.create({
-    data: {
-      userId: user.id,
-      applicationId: app1.id,
-      type: "Technical Interview",
-      round: 1,
-      date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
-      time: "14:00",
-      timezone: "PST",
-      interviewerName: "Marcus Vance (Staff SDET)",
-      meetingLink: "https://meet.google.com/abc-defg-hij",
-      notes: "Focus area: Object-Oriented Framework Architecture, Page Object Model design, parallel execution, and RestAssured assertion strategies.",
-      status: "Scheduled",
-    },
-  });
-
-  // 9. Create Reminders
-  await db.reminder.create({
-    data: {
-      userId: user.id,
-      applicationId: app1.id,
-      type: "Interview",
-      title: "Prepare for CloudScale Technical Interview",
-      description: "Review Playwright & Java POM design patterns and RestAssured code snippets.",
-      dueDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
-      isCompleted: false,
-    },
-  });
-
-  await db.reminder.create({
-    data: {
-      userId: user.id,
-      applicationId: app2.id,
-      type: "Follow Up",
-      title: "Follow up with David Miller (DataStream AI)",
-      description: "You applied 5 days ago and had a phone screen request. Confirm recruiter availability.",
-      dueDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
-      isCompleted: false,
-    },
-  });
-
-  // 10. Default LLM Config
+  // Default LLM Config
   await db.lLMConfig.create({
     data: {
       userId: user.id,
