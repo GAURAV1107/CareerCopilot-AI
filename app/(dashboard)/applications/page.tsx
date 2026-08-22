@@ -683,6 +683,17 @@ export default function ApplicationsPage() {
                             </select>
                           </div>
 
+                          {/* Download AI-Tailored Resume PDF Button */}
+                          <a
+                            href={`/api/applications/${app.id}/tailored-resume-pdf`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="w-full bg-violet-600/20 hover:bg-violet-600/30 text-violet-300 border border-violet-500/30 font-semibold py-1.5 px-2.5 rounded-lg transition text-[11px] flex items-center justify-center gap-1.5"
+                          >
+                            <FileText className="h-3.5 w-3.5 text-violet-400" />
+                            <span>Download AI-Tailored Resume (PDF)</span>
+                          </a>
+
                           {/* Quick Stage Mover */}
                           <div className="flex items-center justify-between pt-1">
                             <select
@@ -783,6 +794,15 @@ export default function ApplicationsPage() {
                     {app.appliedDate && <div className="text-emerald-400">Applied: {formatDate(app.appliedDate)}</div>}
                   </td>
                   <td className="p-4 text-right space-x-2">
+                    <a
+                      href={`/api/applications/${app.id}/tailored-resume-pdf`}
+                      target="_blank"
+                      rel="noreferrer"
+                      title="Download AI-Tailored Resume PDF"
+                      className="p-1.5 bg-violet-500/10 hover:bg-violet-500/20 text-violet-300 rounded-lg border border-violet-500/20 inline-flex items-center gap-1 text-xs font-semibold"
+                    >
+                      <FileText className="h-3.5 w-3.5" /> PDF
+                    </a>
                     <button
                       onClick={() => handleOpenEdit(app)}
                       className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700 inline-flex items-center gap-1 text-xs"
