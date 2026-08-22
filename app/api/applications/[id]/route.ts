@@ -30,7 +30,18 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
   const { id } = await params;
   try {
-    const { status, resumeId, recruiterName, recruiterEmail, salaryOffered, notes, isArchived } = await req.json();
+    const {
+      status,
+      followUpStatus,
+      resumeId,
+      recruiterName,
+      recruiterEmail,
+      referralDetails,
+      salaryOffered,
+      appliedDate,
+      notes,
+      isArchived,
+    } = await req.json();
 
     const existing = await db.application.findFirst({
       where: { id, userId: user.id },
@@ -44,10 +55,13 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       where: { id },
       data: {
         status: status ?? existing.status,
+        followUpStatus: followUpStatus ?? existing.followUpStatus,
         resumeId: resumeId !== undefined ? resumeId : existing.resumeId,
         recruiterName: recruiterName !== undefined ? recruiterName : existing.recruiterName,
         recruiterEmail: recruiterEmail !== undefined ? recruiterEmail : existing.recruiterEmail,
+        referralDetails: referralDetails !== undefined ? referralDetails : existing.referralDetails,
         salaryOffered: salaryOffered !== undefined ? Number(salaryOffered) : existing.salaryOffered,
+        appliedDate: appliedDate ? new Date(appliedDate) : existing.appliedDate,
         notes: notes !== undefined ? notes : existing.notes,
         isArchived: isArchived !== undefined ? isArchived : existing.isArchived,
       },

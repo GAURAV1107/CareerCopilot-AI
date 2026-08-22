@@ -117,28 +117,30 @@ model Job {
 }
 
 model Application {
-  id             String                @id @default(uuid())
-  userId         String
-  user           User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  jobId          String
-  job            Job                   @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  resumeId       String?
-  resume         Resume?               @relation(fields: [resumeId], references: [id], onDelete: SetNull)
-  status         String                @default("Saved") // Saved, Interested, Applied, Recruiter Contacted, Screening, Technical Interview, Managerial Interview, HR Interview, Offer, Accepted, Rejected, Withdrawn
-  appliedDate    DateTime?
-  recruiterName  String?
-  recruiterEmail String?
-  salaryOffered  Float?
-  notes          String?
-  isArchived     Boolean               @default(false)
-  createdAt      DateTime              @default(now())
-  updatedAt      DateTime              @updatedAt
+  id               String                @id @default(uuid())
+  userId           String
+  user             User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobId            String
+  job              Job                   @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  resumeId         String?
+  resume           Resume?               @relation(fields: [resumeId], references: [id], onDelete: SetNull)
+  status           String                @default("Saved") // Saved, Interested, Applied, Recruiter Contacted, Screening, Technical Interview, Managerial Interview, HR Interview, Offer, Accepted, Rejected, Withdrawn
+  followUpStatus   String?               @default("No") // Yes, No, Pending
+  appliedDate      DateTime?
+  recruiterName    String?
+  recruiterEmail   String?
+  referralDetails  String?
+  salaryOffered    Float?
+  notes            String?
+  isArchived       Boolean               @default(false)
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
 
-  activities     ApplicationActivity[]
-  appNotes       ApplicationNote[]
-  interviews     Interview[]
-  reminders      Reminder[]
-  jobMatches     JobMatchAnalysis[]
+  activities       ApplicationActivity[]
+  appNotes         ApplicationNote[]
+  interviews       Interview[]
+  reminders        Reminder[]
+  jobMatches       JobMatchAnalysis[]
 }
 
 model ApplicationActivity {
