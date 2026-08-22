@@ -1,0 +1,28 @@
+# Node dependencies
+node_modules/
+.npm-cache/
+
+# Next.js build output
+.next/
+out/
+build/
+dist/
+
+# SQLite Database & Local storage
+*.db
+*.db-journal
+dev.db
+dev.db-journal
+public/uploads/*
+!public/uploads/.gitkeep
+
+# Environment variables & Secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Operating System Files
+.DS_Store
+Thumbs.db
