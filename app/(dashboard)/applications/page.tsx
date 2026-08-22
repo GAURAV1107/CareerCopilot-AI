@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import {
   KanbanSquare,
@@ -13,7 +13,6 @@ import {
   UserCheck,
   Sparkles,
   ChevronRight,
-  Bell,
   Clock,
   Briefcase,
   AlertCircle,
@@ -21,6 +20,12 @@ import {
   FileText,
   User,
   Link2,
+  Edit,
+  Trash2,
+  Download,
+  Upload,
+  X,
+  AlertTriangle,
 } from "lucide-react";
 
 interface ApplicationItem {
@@ -39,6 +44,7 @@ interface ApplicationItem {
     companyName: string;
     companyWebsite?: string;
     jobTitle: string;
+    description: string;
     jobUrl?: string;
     location?: string;
     salaryMin?: number;
@@ -88,9 +94,14 @@ export default function ApplicationsPage() {
   const [viewMode, setViewMode] = useState<"kanban" | "table">("kanban");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStage, setSelectedStage] = useState("ALL");
-  const [showAddModal, setShowAddModal] = useState(false);
 
-  // New Application Modal Form state
+  // Modal Controls
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [editingApp, setEditingApp] = useState<ApplicationItem | null>(null);
+  const [deletingApp, setDeletingApp] = useState<ApplicationItem | null>(null);
+  const [importConfirmItems, setImportConfirmItems] = useState<unknown[] | null>(null);
+
+  // Form Fields (Used for Create & Edit)
   const [companyName, setCompanyName] = useState("");
   const [jobTitle, setJobTitle] = useState("");
   const [jobUrl, setJobUrl] = useState("");
@@ -104,6 +115,9 @@ export default function ApplicationsPage() {
   const [status, setStatus] = useState("Saved");
   const [followUpStatus, setFollowUpStatus] = useState("No");
   const [submitting, setSubmitting] = useState(false);
+  const [message, setMessage] = useState("");
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchApplications();
@@ -122,6 +136,102 @@ export default function ApplicationsPage() {
       setLoading(false);
     }
   }
+
+  // Populate Edit Modal
+  const handleOpenEdit = (app: ApplicationItem) => {
+    setEditingApp(app);
+    setCompanyName(app.job.companyName);
+    setJobTitle(app.job.jobTitle);
+    setJobUrl(app.job.jobUrl || "");
+    setLocation(app.job.location || "San Francisco, CA");
+    setSalaryMin(app.job.salaryMin ? String(app.job.salaryMin) : "");
+    setSalaryMax(app.job.salaryMax ? String(app.job.salaryMax) : "");
+    setDescription(app.job.description || "");
+    setRecruiterName(app.recruiterName || "");
+    setRecruiterEmail(app.recruiterEmail || "");
+    setReferralDetails(app.referralDetails || "");
+    setStatus(app.status);
+    setFollowUpStatus(app.followUpStatus || "No");
+  };
+
+  // Save / Edit Application
+  const handleSaveApplication = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+
+    try {
+      if (editingApp) {
+        // Update existing application
+        const res = await fetch(`/api/applications/${editingApp.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            status,
+            followUpStatus,
+            recruiterName,
+            recruiterEmail,
+            referralDetails,
+          }),
+        });
+
+        if (!res.ok) throw new Error("Failed to update application.");
+        setMessage("Application card updated successfully!");
+        setEditingApp(null);
+      } else {
+        // Create new application
+        const res = await fetch("/api/applications", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            companyName,
+            jobTitle,
+            jobUrl,
+            location,
+            salaryMin,
+            salaryMax,
+            description,
+            recruiterName,
+            recruiterEmail,
+            referralDetails,
+            status,
+            followUpStatus,
+          }),
+        });
+
+        if (!res.ok) throw new Error("Failed to create application.");
+        setMessage("New job opportunity card added!");
+        setShowAddModal(false);
+      }
+
+      fetchApplications();
+      setTimeout(() => setMessage(""), 4000);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      setMessage(`Error: ${errorMessage}`);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Delete Application after confirmation
+  const handleConfirmDelete = async () => {
+    if (!deletingApp) return;
+    setSubmitting(true);
+    try {
+      const res = await fetch(`/api/applications/${deletingApp.id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete application.");
+
+      setMessage("Application card deleted successfully.");
+      setDeletingApp(null);
+      fetchApplications();
+      setTimeout(() => setMessage(""), 4000);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      setMessage(`Error: ${errorMessage}`);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const handleStatusChange = async (appId: string, newStatus: string) => {
     setApplications((prev) =>
@@ -157,43 +267,83 @@ export default function ApplicationsPage() {
     }
   };
 
-  const handleCreateApplication = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // EXPORT CARDS TO JSON
+  const handleExportJSON = () => {
+    const exportData = applications.map((app) => ({
+      id: app.id,
+      companyName: app.job.companyName,
+      jobTitle: app.job.jobTitle,
+      jobUrl: app.job.jobUrl,
+      location: app.job.location,
+      salaryMin: app.job.salaryMin,
+      salaryMax: app.job.salaryMax,
+      currency: app.job.currency,
+      workMode: app.job.workMode,
+      status: app.status,
+      followUpStatus: app.followUpStatus || "No",
+      recruiterName: app.recruiterName,
+      recruiterEmail: app.recruiterEmail,
+      referralDetails: app.referralDetails,
+      appliedDate: app.appliedDate,
+      createdAt: app.createdAt,
+      description: app.job.description,
+    }));
+
+    const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(exportData, null, 2))}`;
+    const downloadAnchor = document.createElement("a");
+    downloadAnchor.setAttribute("href", jsonString);
+    downloadAnchor.setAttribute("download", `CareerCopilot_Job_Cards_${new Date().toISOString().split("T")[0]}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+  };
+
+  // TRIGGER FILE INPUT FOR IMPORT JSON
+  const handleImportJSONClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  // PARSE IMPORTED JSON FILE
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const parsed = JSON.parse(event.target?.result as string);
+        if (!Array.isArray(parsed)) throw new Error("JSON file must contain an array of job card objects.");
+        setImportConfirmItems(parsed);
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        setMessage(`Import Error: ${errorMessage}`);
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  };
+
+  // CONFIRM BULK IMPORT
+  const handleConfirmImport = async () => {
+    if (!importConfirmItems) return;
     setSubmitting(true);
 
     try {
-      const res = await fetch("/api/applications", {
+      const res = await fetch("/api/applications/import", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          companyName,
-          jobTitle,
-          jobUrl,
-          location,
-          salaryMin,
-          salaryMax,
-          description,
-          recruiterName,
-          recruiterEmail,
-          referralDetails,
-          status,
-          followUpStatus,
-        }),
+        body: JSON.stringify({ items: importConfirmItems }),
       });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Import failed.");
 
-      if (!res.ok) throw new Error("Failed to save job application.");
-
-      setShowAddModal(false);
-      setCompanyName("");
-      setJobTitle("");
-      setJobUrl("");
-      setDescription("");
-      setRecruiterName("");
-      setRecruiterEmail("");
-      setReferralDetails("");
+      setMessage(data.message || `Successfully imported ${data.count} job cards!`);
+      setImportConfirmItems(null);
       fetchApplications();
-    } catch (err) {
-      console.error(err);
+      setTimeout(() => setMessage(""), 4000);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      setMessage(`Import Failed: ${errorMessage}`);
     } finally {
       setSubmitting(false);
     }
@@ -229,16 +379,37 @@ export default function ApplicationsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header Bar */}
+      {/* Hidden File Input for JSON Import */}
+      <input type="file" ref={fileInputRef} accept=".json" onChange={handleFileChange} className="hidden" />
+
+      {/* Header Bar with Action Buttons */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white tracking-tight">Job Application Tracker</h1>
           <p className="text-xs text-slate-400">
-            Manage your 12-stage application pipeline, interview schedules, recruiter contacts, and follow-up status.
+            Manage your 12-stage application pipeline with full CRUD operations, JSON import/export, and recruiter tracking.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5">
+          {/* JSON Export Button */}
+          <button
+            onClick={handleExportJSON}
+            className="bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-800 text-xs font-semibold px-3.5 py-2.5 rounded-xl transition flex items-center gap-1.5"
+            title="Export all cards to JSON"
+          >
+            <Download className="h-4 w-4 text-emerald-400" /> Export JSON
+          </button>
+
+          {/* JSON Import Button */}
+          <button
+            onClick={handleImportJSONClick}
+            className="bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-800 text-xs font-semibold px-3.5 py-2.5 rounded-xl transition flex items-center gap-1.5"
+            title="Import cards from JSON file"
+          >
+            <Upload className="h-4 w-4 text-indigo-400" /> Import JSON
+          </button>
+
           {/* View Mode Toggle */}
           <div className="bg-slate-900 border border-slate-800 p-1 rounded-xl flex items-center gap-1">
             <button
@@ -260,13 +431,42 @@ export default function ApplicationsPage() {
           </div>
 
           <button
-            onClick={() => setShowAddModal(true)}
+            onClick={() => {
+              setEditingApp(null);
+              setCompanyName("");
+              setJobTitle("");
+              setJobUrl("");
+              setDescription("");
+              setRecruiterName("");
+              setRecruiterEmail("");
+              setReferralDetails("");
+              setShowAddModal(true);
+            }}
             className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-lg shadow-blue-600/30 transition flex items-center gap-2"
           >
             <Plus className="h-4 w-4" /> Add Opportunity
           </button>
         </div>
       </div>
+
+      {/* Alert / Notification Feedback */}
+      {message && (
+        <div
+          className={`p-4 rounded-xl border text-xs flex items-center justify-between ${
+            message.startsWith("Error") || message.startsWith("Import Failed")
+              ? "bg-red-500/10 border-red-500/20 text-red-400"
+              : "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            {message.startsWith("Error") ? <AlertCircle className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
+            <span>{message}</span>
+          </div>
+          <button onClick={() => setMessage("")} className="hover:opacity-75">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
 
       {/* Filter & Search Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900 border border-slate-800 p-4 rounded-2xl">
@@ -334,9 +534,9 @@ export default function ApplicationsPage() {
                       return (
                         <div
                           key={app.id}
-                          className="bg-slate-950 border border-slate-800/80 hover:border-blue-500/50 rounded-xl p-4 transition shadow-lg space-y-3 group"
+                          className="bg-slate-950 border border-slate-800/80 hover:border-blue-500/50 rounded-xl p-4 transition shadow-lg space-y-3 group relative"
                         >
-                          {/* Card Top: Title & Score */}
+                          {/* Card Header & CRUD Action Buttons */}
                           <div className="flex items-start justify-between gap-2">
                             <div>
                               <Link
@@ -347,12 +547,32 @@ export default function ApplicationsPage() {
                               </Link>
                               <p className="text-xs text-slate-300 font-semibold">{app.job.companyName}</p>
                             </div>
-                            {matchScore !== undefined && (
-                              <span className="shrink-0 text-[11px] font-extrabold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                                {matchScore}% Match
-                              </span>
-                            )}
+
+                            {/* Card CRUD Actions */}
+                            <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition shrink-0">
+                              <button
+                                onClick={() => handleOpenEdit(app)}
+                                title="Edit Opportunity Card"
+                                className="p-1 text-slate-400 hover:text-blue-400 hover:bg-slate-900 rounded-md transition"
+                              >
+                                <Edit className="h-3.5 w-3.5" />
+                              </button>
+                              <button
+                                onClick={() => setDeletingApp(app)}
+                                title="Delete Opportunity Card"
+                                className="p-1 text-slate-400 hover:text-red-400 hover:bg-slate-900 rounded-md transition"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
                           </div>
+
+                          {/* Match Score Badge */}
+                          {matchScore !== undefined && (
+                            <div className="inline-block text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                              {matchScore}% Match Score
+                            </div>
+                          )}
 
                           {/* Dates & Salary Badges */}
                           <div className="space-y-1.5 text-[11px] text-slate-400">
@@ -533,14 +753,19 @@ export default function ApplicationsPage() {
                     <div>Added: {formatDate(app.createdAt)}</div>
                     {app.appliedDate && <div className="text-emerald-400">Applied: {formatDate(app.appliedDate)}</div>}
                   </td>
-                  <td className="p-4 text-right">
-                    <Link
-                      href={`/applications/${app.id}`}
-                      className="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs px-3 py-1.5 rounded-lg border border-slate-700 inline-flex items-center gap-1"
+                  <td className="p-4 text-right space-x-2">
+                    <button
+                      onClick={() => handleOpenEdit(app)}
+                      className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700 inline-flex items-center gap-1 text-xs"
                     >
-                      <span>Details</span>
-                      <ChevronRight className="h-3 w-3" />
-                    </Link>
+                      <Edit className="h-3.5 w-3.5" /> Edit
+                    </button>
+                    <button
+                      onClick={() => setDeletingApp(app)}
+                      className="p-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg border border-red-500/20 inline-flex items-center gap-1 text-xs"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" /> Delete
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -549,26 +774,38 @@ export default function ApplicationsPage() {
         </div>
       )}
 
-      {/* Add New Opportunity Modal */}
-      {showAddModal && (
+      {/* CREATE / EDIT APPLICATION MODAL */}
+      {(showAddModal || editingApp) && (
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-xl p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
-            <h2 className="text-lg font-bold text-white border-b border-slate-800 pb-3 flex items-center gap-2">
-              <Plus className="h-5 w-5 text-blue-400" />
-              <span>Add New Job Opportunity</span>
-            </h2>
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                {editingApp ? <Edit className="h-5 w-5 text-blue-400" /> : <Plus className="h-5 w-5 text-blue-400" />}
+                <span>{editingApp ? "Edit Opportunity Card" : "Add New Job Opportunity"}</span>
+              </h2>
+              <button
+                onClick={() => {
+                  setShowAddModal(false);
+                  setEditingApp(null);
+                }}
+                className="text-slate-400 hover:text-white"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
 
-            <form onSubmit={handleCreateApplication} className="space-y-4 text-xs">
+            <form onSubmit={handleSaveApplication} className="space-y-4 text-xs">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block font-semibold text-slate-300 mb-1">Company Name *</label>
                   <input
                     type="text"
                     required
+                    disabled={!!editingApp}
                     placeholder="e.g. CloudScale Systems"
                     value={companyName}
                     onChange={(e) => setCompanyName(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-blue-500"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-blue-500 disabled:opacity-60"
                   />
                 </div>
 
@@ -577,10 +814,11 @@ export default function ApplicationsPage() {
                   <input
                     type="text"
                     required
+                    disabled={!!editingApp}
                     placeholder="e.g. Senior SDET"
                     value={jobTitle}
                     onChange={(e) => setJobTitle(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-blue-500"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-blue-500 disabled:opacity-60"
                   />
                 </div>
               </div>
@@ -671,7 +909,7 @@ export default function ApplicationsPage() {
               {/* Pipeline Stage & Follow Up Required */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block font-semibold text-slate-300 mb-1">Initial Pipeline Stage</label>
+                  <label className="block font-semibold text-slate-300 mb-1">Pipeline Stage</label>
                   <select
                     value={status}
                     onChange={(e) => setStatus(e.target.value)}
@@ -699,21 +937,26 @@ export default function ApplicationsPage() {
                 </div>
               </div>
 
-              <div>
-                <label className="block font-semibold text-slate-300 mb-1">Job Description</label>
-                <textarea
-                  rows={4}
-                  placeholder="Paste job description text here..."
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white focus:outline-none focus:border-blue-500"
-                ></textarea>
-              </div>
+              {!editingApp && (
+                <div>
+                  <label className="block font-semibold text-slate-300 mb-1">Job Description</label>
+                  <textarea
+                    rows={4}
+                    placeholder="Paste job description text here..."
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white focus:outline-none focus:border-blue-500"
+                  ></textarea>
+                </div>
+              )}
 
               <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
                 <button
                   type="button"
-                  onClick={() => setShowAddModal(false)}
+                  onClick={() => {
+                    setShowAddModal(false);
+                    setEditingApp(null);
+                  }}
                   className="px-4 py-2 rounded-xl text-slate-400 hover:text-white"
                 >
                   Cancel
@@ -723,10 +966,72 @@ export default function ApplicationsPage() {
                   disabled={submitting}
                   className="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-5 py-2 rounded-xl shadow-lg shadow-blue-600/30 transition"
                 >
-                  {submitting ? "Saving Opportunity..." : "Save Opportunity"}
+                  {submitting ? "Saving..." : editingApp ? "Update Card" : "Save Opportunity"}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* CONFIRMATION POPUP FOR DELETE APPLICATION */}
+      {deletingApp && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-red-500/30 rounded-2xl w-full max-w-md p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center gap-3 text-red-400">
+              <AlertTriangle className="h-6 w-6 shrink-0" />
+              <h2 className="text-base font-bold text-white">Confirm Card Deletion</h2>
+            </div>
+            <p className="text-xs text-slate-300">
+              Are you sure you want to delete <strong className="text-white">{deletingApp.job.jobTitle}</strong> at{" "}
+              <strong className="text-white">{deletingApp.job.companyName}</strong>? This action cannot be undone.
+            </p>
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                onClick={() => setDeletingApp(null)}
+                className="px-4 py-2 rounded-xl text-xs text-slate-400 hover:text-white bg-slate-800"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                disabled={submitting}
+                className="bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white text-xs font-semibold px-5 py-2 rounded-xl shadow-lg shadow-red-600/30 transition"
+              >
+                {submitting ? "Deleting..." : "Yes, Delete Application"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CONFIRMATION POPUP FOR JSON BULK IMPORT */}
+      {importConfirmItems && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-indigo-500/30 rounded-2xl w-full max-w-md p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center gap-3 text-indigo-400">
+              <Upload className="h-6 w-6 shrink-0" />
+              <h2 className="text-base font-bold text-white">Confirm JSON Bulk Import</h2>
+            </div>
+            <p className="text-xs text-slate-300">
+              Found <strong className="text-indigo-300 font-bold">{importConfirmItems.length} job cards</strong> in the JSON file.
+              Do you want to import all of them into your job application tracker pipeline?
+            </p>
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                onClick={() => setImportConfirmItems(null)}
+                className="px-4 py-2 rounded-xl text-xs text-slate-400 hover:text-white bg-slate-800"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmImport}
+                disabled={submitting}
+                className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-semibold px-5 py-2 rounded-xl shadow-lg shadow-indigo-600/30 transition"
+              >
+                {submitting ? "Importing..." : `Import ${importConfirmItems.length} Cards`}
+              </button>
+            </div>
           </div>
         </div>
       )}
