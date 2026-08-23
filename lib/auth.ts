@@ -39,27 +39,44 @@ export async function verifySessionToken(token: string): Promise<SessionUser | n
   }
 }
 
-export async function getCurrentUser(): Promise<SessionUser | null> {
+export async function getCurrentUser(): Promise<SessionUser> {
+  // Always active 100% local session for Manujendra Gaurav with zero login/db dependency
+  const defaultCandidate: SessionUser = {
+    id: "user-manujendra-gaurav",
+    email: "gauravmanujendra@gmail.com",
+    name: "Manujendra Gaurav",
+    role: "JOB_SEEKER",
+  };
+
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get("auth_token")?.value;
-    if (!token) {
-      // For instant fallback / demo experience, check if default user exists
-      const defaultUser = await db.user.findFirst({
-        where: { email: "manujendragaurav@gmail.com" },
-      });
-      if (defaultUser) {
-        return {
-          id: defaultUser.id,
-          email: defaultUser.email,
-          name: defaultUser.name,
-          role: defaultUser.role,
-        };
-      }
-      return null;
+    if (token) {
+      const verified = await verifySessionToken(token);
+      if (verified) return verified;
     }
-    return await verifySessionToken(token);
-  } catch {
-    return null;
+
+    // DB lookup fallback if available
+    const dbUser = await db.user.findFirst({
+      where: {
+        OR: [
+          { email: "gauravmanujendra@gmail.com" },
+          { email: "manujendragaurav@gmail.com" },
+        ],
+      },
+    });
+
+    if (dbUser) {
+      return {
+        id: dbUser.id,
+        email: dbUser.email,
+        name: dbUser.name,
+        role: dbUser.role,
+      };
+    }
+  } catch (err) {
+    console.warn("Using active local session candidate:", defaultCandidate.name);
   }
+
+  return defaultCandidate;
 }
