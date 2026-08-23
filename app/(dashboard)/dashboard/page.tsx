@@ -126,13 +126,20 @@ export default function DashboardPage() {
           <h1 className="text-2xl font-bold text-white tracking-tight">Dashboard</h1>
           <p className="text-xs text-slate-400">Welcome back, Manujendra. Here is your QA & SDET job search overview.</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <Link
-            href="/jobs"
+            href="/applications"
             className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-lg shadow-blue-600/30 transition"
           >
-            <Plus className="h-4 w-4" />
-            <span>Add Job Opportunity</span>
+            <KanbanSquare className="h-4 w-4" />
+            <span>View Pipeline Board</span>
+          </Link>
+          <Link
+            href="/ai-copilot"
+            className="inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-lg shadow-violet-600/30 transition"
+          >
+            <Sparkles className="h-4 w-4" />
+            <span>AI Copilot</span>
           </Link>
         </div>
       </div>
