@@ -39,9 +39,25 @@ export default function RegisterPage() {
     }
   };
 
-  const handleOAuthRegister = (providerName: string) => {
-    alert(`Signing up with ${providerName}... Redirecting to CareerCopilot Dashboard.`);
-    router.push("/dashboard");
+  const handleOAuthRegister = async (providerName: string) => {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch("/api/auth/google", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: "gauravmanujendra@gmail.com", name: "Manujendra Gaurav" }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Google authentication failed.");
+
+      router.push("/dashboard");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

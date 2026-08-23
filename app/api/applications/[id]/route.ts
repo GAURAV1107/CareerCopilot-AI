@@ -50,6 +50,15 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (!existing) return NextResponse.json({ error: "Application not found." }, { status: 404 });
 
     const isStatusChanged = status && status !== existing.status;
+    const isFollowUpChanged = followUpStatus && followUpStatus !== existing.followUpStatus;
+
+    // Dynamically set appliedDate if status changes to Applied or later stages and was previously null
+    let newAppliedDate = existing.appliedDate;
+    if (appliedDate) {
+      newAppliedDate = new Date(appliedDate);
+    } else if (isStatusChanged && (status === "Applied" || status !== "Saved") && !existing.appliedDate) {
+      newAppliedDate = new Date();
+    }
 
     const updated = await db.application.update({
       where: { id },
@@ -61,18 +70,43 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         recruiterEmail: recruiterEmail !== undefined ? recruiterEmail : existing.recruiterEmail,
         referralDetails: referralDetails !== undefined ? referralDetails : existing.referralDetails,
         salaryOffered: salaryOffered !== undefined ? Number(salaryOffered) : existing.salaryOffered,
-        appliedDate: appliedDate ? new Date(appliedDate) : existing.appliedDate,
+        appliedDate: newAppliedDate,
         notes: notes !== undefined ? notes : existing.notes,
         isArchived: isArchived !== undefined ? isArchived : existing.isArchived,
+      },
+      include: {
+        job: true,
+        resume: true,
+        interviews: true,
+        reminders: true,
+        activities: { orderBy: { createdAt: "desc" } },
       },
     });
 
     if (isStatusChanged) {
+      const nowStr = new Date().toLocaleString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        hour: "numeric",
+        minute: "numeric",
+      });
+
       await db.applicationActivity.create({
         data: {
           applicationId: id,
           eventType: "Status Changed",
-          description: `Moved status from "${existing.status}" to "${status}" for ${existing.job.jobTitle} at ${existing.job.companyName}.`,
+          description: `Moved stage from "${existing.status}" to "${status}" on ${nowStr}.`,
+        },
+      });
+    }
+
+    if (isFollowUpChanged) {
+      await db.applicationActivity.create({
+        data: {
+          applicationId: id,
+          eventType: "Follow-Up Updated",
+          description: `Updated follow-up status to "${followUpStatus}".`,
         },
       });
     }

@@ -38,9 +38,25 @@ export default function LoginPage() {
     }
   };
 
-  const handleOAuthLogin = (providerName: string) => {
-    alert(`Connecting to ${providerName} OAuth... Logging in as Demo Candidate Account.`);
-    router.push("/dashboard");
+  const handleOAuthLogin = async (providerName: string) => {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch("/api/auth/google", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: "gauravmanujendra@gmail.com", name: "Manujendra Gaurav" }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Google authentication failed.");
+
+      router.push("/dashboard");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
