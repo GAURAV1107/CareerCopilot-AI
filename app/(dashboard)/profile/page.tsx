@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { User, Briefcase, Code2, Save, CheckCircle2, AlertCircle, Plus, X, ShieldCheck, Mail, Globe } from "lucide-react";
+import { User, Briefcase, Code2, Save, CheckCircle2, AlertCircle, Plus, X, Globe } from "lucide-react";
 
 const QA_SKILL_SUGGESTIONS = [
   "Selenium",
@@ -52,10 +52,6 @@ export default function ProfilePage() {
 
   const [skills, setSkills] = useState<string[]>([]);
   const [customSkillInput, setCustomSkillInput] = useState("");
-
-  // Social OAuth Linked state
-  const [googleLinked, setGoogleLinked] = useState(true);
-  const [appleLinked, setAppleLinked] = useState(false);
 
   useEffect(() => {
     async function loadProfile() {
@@ -178,8 +174,8 @@ export default function ProfilePage() {
     <form onSubmit={handleSave} className="space-y-8 max-w-4xl mx-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">User Profile & Account Configuration</h1>
-          <p className="text-xs text-slate-400">Manage your logged-in credentials ({email}), social login links, and technical skill set.</p>
+          <h1 className="text-2xl font-bold text-white tracking-tight">Local Career Profile</h1>
+          <p className="text-xs text-slate-400">Manage the career details and skills stored only in this browser.</p>
         </div>
         <button
           type="submit"
@@ -203,62 +199,6 @@ export default function ProfilePage() {
           <span>{message}</span>
         </div>
       )}
-
-      {/* Account & OAuth Connections */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
-        <h2 className="text-sm font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
-          <ShieldCheck className="h-4 w-4 text-emerald-400" />
-          <span>Logged In Account & Social OAuth Authentication</span>
-        </h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-          <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-1">
-            <span className="text-slate-500 flex items-center gap-1">
-              <Mail className="h-3.5 w-3.5 text-blue-400" /> Active Logged In Email
-            </span>
-            <p className="font-bold text-white text-sm">{email}</p>
-            <span className="text-[10px] text-emerald-400 block pt-1">✓ Session Authenticated via JWT</span>
-          </div>
-
-          <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3">
-            <span className="text-slate-400 font-semibold block">Social OAuth Connections</span>
-
-            <div className="flex items-center justify-between">
-              <span className="text-slate-300 font-medium flex items-center gap-2">
-                Google Account
-              </span>
-              <button
-                type="button"
-                onClick={() => setGoogleLinked(!googleLinked)}
-                className={`px-3 py-1 rounded-md text-[11px] font-semibold transition ${
-                  googleLinked
-                    ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-                    : "bg-slate-800 text-slate-400 hover:text-white"
-                }`}
-              >
-                {googleLinked ? "✓ Linked" : "Connect Google"}
-              </button>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <span className="text-slate-300 font-medium flex items-center gap-2">
-                Apple ID
-              </span>
-              <button
-                type="button"
-                onClick={() => setAppleLinked(!appleLinked)}
-                className={`px-3 py-1 rounded-md text-[11px] font-semibold transition ${
-                  appleLinked
-                    ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-                    : "bg-slate-800 text-slate-400 hover:text-white"
-                }`}
-              >
-                {appleLinked ? "✓ Linked" : "Connect Apple ID"}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Personal Info Card */}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">

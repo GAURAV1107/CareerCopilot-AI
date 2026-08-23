@@ -20,6 +20,7 @@ import {
   Wand2,
 } from "lucide-react";
 import { generateTailoredResumePDF } from "@/lib/pdf-generator";
+import { downloadTailoredResumeDOCX } from "@/lib/resume-files";
 
 interface ApplicationDetail {
   id: string;
@@ -76,6 +77,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
   // Tailored Resume State
   const [tailoring, setTailoring] = useState(false);
   const [tailoredData, setTailoredData] = useState<any>(null);
+  const [tailorError, setTailorError] = useState("");
 
   useEffect(() => {
     async function loadApp() {
@@ -94,8 +96,9 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
     loadApp();
   }, [id]);
 
-  const handleGenerateTailoredResume = async () => {
+  const generateTailoredResume = async () => {
     setTailoring(true);
+    setTailorError("");
     try {
       const res = await fetch("/api/ai/tailor-resume", {
         method: "POST",
@@ -103,29 +106,38 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
         body: JSON.stringify({ applicationId: id }),
       });
       const data = await res.json();
-      if (data.tailoredData) {
-        setTailoredData(data.tailoredData);
-      }
+      if (!res.ok) throw new Error(data.error || "Unable to tailor the resume.");
+      if (!data.tailoredData) throw new Error("The model returned no tailored resume.");
+      setTailoredData(data.tailoredData);
+      return data.tailoredData;
     } catch (err) {
       console.error(err);
+      setTailorError(err instanceof Error ? err.message : "Unable to tailor the resume.");
+      return null;
     } finally {
       setTailoring(false);
     }
   };
 
+  const handleGenerateTailoredResume = async () => { await generateTailoredResume(); };
+
   const handleDownloadPDF = async () => {
-    if (tailoredData) {
-      // Client-side PDF generation using jsPDF
-      const doc = generateTailoredResumePDF(tailoredData);
-      const filename = `${tailoredData.candidateName.replace(/\s+/g, "_")}_Resume_${app?.job.companyName.replace(
+    const resumeData = tailoredData || await generateTailoredResume();
+    if (resumeData) {
+      const doc = generateTailoredResumePDF(resumeData);
+      const filename = `${resumeData.candidateName.replace(/\s+/g, "_")}_Resume_${app?.job.companyName.replace(
         /[^a-zA-Z0-9]/g,
         ""
       )}.pdf`;
       doc.save(filename);
-    } else {
-      // Direct server-side API stream download
-      window.open(`/api/applications/${id}/tailored-resume-pdf`, "_blank");
     }
+  };
+
+  const handleDownloadDOCX = async () => {
+    const resumeData = tailoredData || await generateTailoredResume();
+    if (!resumeData) return;
+    const filename = `${resumeData.candidateName}_Resume_${app?.job.companyName}`.replace(/[^a-zA-Z0-9_-]+/g, "_");
+    await downloadTailoredResumeDOCX(resumeData, `${filename}.docx`);
   };
 
   if (loading) return <div className="p-8 text-xs text-slate-500">Loading application timeline...</div>;
@@ -164,12 +176,16 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
               <Download className="h-4 w-4" />
               <span>Download Tailored Resume PDF</span>
             </button>
+            <button onClick={handleDownloadDOCX} className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition flex items-center gap-2">
+              <Download className="h-4 w-4" /><span>Download Editable DOCX</span>
+            </button>
           </div>
         </div>
       </div>
 
       {/* NEW SECTION: AI-Tailored Resume & PDF Export */}
       <div className="bg-gradient-to-r from-blue-950/80 via-slate-900 to-indigo-950/80 border border-blue-500/30 rounded-2xl p-6 space-y-4 shadow-xl">
+        {tailorError && <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-300">{tailorError}</div>}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-blue-500/20 pb-4">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-xl bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center justify-center">
@@ -204,6 +220,9 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
             >
               <Download className="h-3.5 w-3.5" />
               <span>Download PDF</span>
+            </button>
+            <button onClick={handleDownloadDOCX} className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2 rounded-xl transition flex items-center gap-1.5">
+              <Download className="h-3.5 w-3.5" /><span>Download DOCX</span>
             </button>
           </div>
         </div>

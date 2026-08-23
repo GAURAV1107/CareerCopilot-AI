@@ -79,7 +79,7 @@ export function generateTailoredResumePDF(data: TailoredResumeData): jsPDF {
   // Contact Info Line
   doc.setFontSize(9);
   doc.setTextColor(71, 85, 105); // slate-600
-  const contactText = `${data.email} | ${data.phone} | ${data.location} | LinkedIn`;
+  const contactText = [data.email, data.phone, data.location, data.linkedinUrl].filter(Boolean).join(" | ");
   doc.text(contactText, pageWidth / 2, y, { align: "center" });
   y += 7;
 
@@ -113,14 +113,7 @@ export function generateTailoredResumePDF(data: TailoredResumeData): jsPDF {
   doc.setFontSize(8.5);
 
   const skillsObj = data.skillsCategorized || {
-    languages: "Java, Python, SQL, HTML, CSS",
-    aiAndAgents:
-      "AI Agent Development, MCP Server Integration, Skill File Creation, Claude AI, GitHub Copilot, ChatGPT, n8n Workflow Automation, Self-Healing Test Automation",
-    automationFrameworks:
-      "Selenium WebDriver, Playwright, Appium, Robot Framework, Rest Assured, RequestsLibrary, Pytest, TestNG, Pabot",
-    ciCdDevOps: "Jenkins, GitLab CI, Docker, AWS, Linux, Git, GitHub, Bitbucket",
-    apiAndTools: "Postman, REST API Testing, GraphQL",
-    projectManagement: "JIRA, Agile/Scrum, Maven, Word, Excel",
+    automationFrameworks: data.skills?.join(", ") || "",
   };
 
   const skillCategories = [
@@ -158,7 +151,7 @@ export function generateTailoredResumePDF(data: TailoredResumeData): jsPDF {
   y += 2;
 
   // 4. WORK EXPERIENCE
-  drawSectionHeader("WORK EXPERIENCE");
+  if (data.experience?.length) drawSectionHeader("WORK EXPERIENCE");
 
   const defaultExperiences: WorkExperienceItem[] = [
     {
@@ -224,7 +217,7 @@ export function generateTailoredResumePDF(data: TailoredResumeData): jsPDF {
     },
   ];
 
-  const expList = data.experience && data.experience.length > 0 ? data.experience : defaultExperiences;
+  const expList = data.experience || [];
 
   for (const exp of expList) {
     checkPageBreak(12);
@@ -258,7 +251,7 @@ export function generateTailoredResumePDF(data: TailoredResumeData): jsPDF {
   }
 
   // 5. KEY PROJECTS
-  drawSectionHeader("KEY PROJECTS");
+  if (data.projects?.length) drawSectionHeader("KEY PROJECTS");
 
   const defaultProjects: KeyProjectItem[] = [
     {
@@ -288,7 +281,7 @@ export function generateTailoredResumePDF(data: TailoredResumeData): jsPDF {
     },
   ];
 
-  const projectList = data.projects && data.projects.length > 0 ? data.projects : defaultProjects;
+  const projectList = data.projects || [];
 
   for (const proj of projectList) {
     checkPageBreak(8);
@@ -315,28 +308,19 @@ export function generateTailoredResumePDF(data: TailoredResumeData): jsPDF {
   y += 1;
 
   // 6. EDUCATION & CERTIFICATIONS
-  drawSectionHeader("EDUCATION & CERTIFICATIONS");
-  checkPageBreak(8);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(8.5);
-  doc.setTextColor(15, 23, 42);
-  doc.text("B.Tech – Electronics & Communication Engineering", margin, y);
-  doc.text("Professional Certifications", pageWidth / 2 + 5, y);
-  y += 4;
-
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(71, 85, 105);
-  doc.text("The Techno School, Bhubaneswar (BPUT) | CGPA: 7.9 / 10", margin, y);
-  doc.text("View all certifications: Google Drive Link", pageWidth / 2 + 5, y);
-  y += 7;
+  if (data.education || data.certifications) {
+    drawSectionHeader("EDUCATION & CERTIFICATIONS");
+    doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(15, 23, 42);
+    for (const value of [data.education, data.certifications].filter(Boolean) as string[]) {
+      const lines = doc.splitTextToSize(value, contentWidth); checkPageBreak(lines.length * 4); doc.text(lines, margin, y); y += lines.length * 4 + 2;
+    }
+  }
 
   // 7. ACHIEVEMENT
-  drawSectionHeader("ACHIEVEMENT");
-  checkPageBreak(6);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
-  doc.setTextColor(15, 23, 42);
-  doc.text("■ Value Champion Award — recognised for outstanding contribution to team quality and automation initiatives.", margin, y);
+  if (data.achievement) {
+    drawSectionHeader("ACHIEVEMENT"); checkPageBreak(6); doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(15, 23, 42);
+    doc.text(doc.splitTextToSize(data.achievement, contentWidth), margin, y);
+  }
 
   return doc;
 }

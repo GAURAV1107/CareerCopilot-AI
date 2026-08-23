@@ -1,11 +1,10 @@
 import { Sidebar } from "@/components/layout/Sidebar";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { getCurrentUser } from "@/lib/auth";
 import Link from "next/link";
 import { User } from "lucide-react";
 
-export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const user = await getCurrentUser();
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const user = { email: "Local workspace", name: "Local User" };
 
   return (
     <div className="min-h-screen bg-slate-950 dark:bg-slate-950 text-slate-100 flex">
@@ -18,7 +17,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <header className="h-16 bg-slate-900/90 dark:bg-slate-900/90 border-b border-slate-800 backdrop-blur-md sticky top-0 z-30 px-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <span className="text-xs font-semibold text-slate-400">
-              Active Candidate Account: <strong className="text-white">{user?.email || "manujendragaurav@gmail.com"}</strong>
+              Storage mode: <strong className="text-white">Local browser only</strong>
             </span>
           </div>
 

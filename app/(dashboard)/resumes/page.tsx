@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { FileText, Upload, Star, Trash2, CheckCircle2, AlertCircle, FileCode, Edit3, Eye } from "lucide-react";
+import { extractResumeText, inferResumeSkills } from "@/lib/resume-files";
 
 interface ResumeItem {
   id: string;
@@ -51,15 +52,26 @@ export default function ResumeManagementPage() {
     setMessage("");
 
     try {
+      let parsedText: string;
+      try {
+        parsedText = await extractResumeText(selectedFile);
+      } catch (error) {
+        throw new Error(`Could not read ${selectedFile.name}: ${error instanceof Error ? error.message : String(error)}`);
+      }
+      if (parsedText.length < 80) throw new Error("Very little text was found. Please use a text-based PDF or DOCX file.");
       const formData = new FormData();
       formData.append("file", selectedFile);
       formData.append("notes", notesInput);
       formData.append("isPrimary", String(isPrimaryInput));
+      formData.append("parsedText", parsedText);
+      formData.append("extractedSkills", JSON.stringify(inferResumeSkills(parsedText)));
 
-      const res = await fetch("/api/resumes", {
-        method: "POST",
-        body: formData,
-      });
+      let res: Response;
+      try {
+        res = await fetch("/api/resumes", { method: "POST", body: formData });
+      } catch (error) {
+        throw new Error(`Resume text was extracted but could not be saved locally: ${error instanceof Error ? error.message : String(error)}`);
+      }
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Upload failed.");

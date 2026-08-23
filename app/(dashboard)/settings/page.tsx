@@ -1,14 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Settings, Key, Cpu, Save, CheckCircle2, AlertCircle, Zap, ShieldCheck, Mail, Sparkles } from "lucide-react";
+import { Settings, Key, Cpu, Save, CheckCircle2, AlertCircle, Zap, ShieldCheck, Sparkles } from "lucide-react";
 
 export default function SettingsPage() {
   const [provider, setProvider] = useState("gemini");
   const [apiKey, setApiKey] = useState("");
   const [model, setModel] = useState("gemini-2.5-flash");
   const [baseUrl, setBaseUrl] = useState("https://generativelanguage.googleapis.com/v1beta");
-  const [notificationEmail, setNotificationEmail] = useState("alex.sdet@careercopilot.ai");
   const [hasApiKey, setHasApiKey] = useState(false);
 
   const [loading, setLoading] = useState(true);
@@ -119,7 +118,7 @@ export default function SettingsPage() {
           <h1 className="text-2xl font-bold text-white tracking-tight">AI & LLM Model Settings</h1>
         </div>
         <p className="text-xs text-slate-400 mt-1">
-          Configure Google Gemini, OpenAI, Anthropic Claude, or Custom LLM models with real-time authentication testing.
+          Configuration is stored only in this browser. Keys are sent only to the selected model endpoint when you use AI features.
         </p>
       </div>
 
@@ -168,7 +167,7 @@ export default function SettingsPage() {
                 </label>
                 {hasApiKey && (
                   <span className="text-[10px] text-emerald-400 font-semibold flex items-center gap-1">
-                    <ShieldCheck className="h-3 w-3" /> Key Stored & Protected
+                    <ShieldCheck className="h-3 w-3" /> Key stored locally on this device
                   </span>
                 )}
               </div>
@@ -206,18 +205,6 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          {/* Email Sync */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1 flex items-center gap-1.5">
-              <Mail className="h-3.5 w-3.5 text-slate-400" /> Realtime Notification & Account Sync Email
-            </label>
-            <input
-              type="email"
-              value={notificationEmail}
-              onChange={(e) => setNotificationEmail(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white"
-            />
-          </div>
 
           {/* Realtime Authentication & Test Connection */}
           <div className="pt-3 border-t border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">

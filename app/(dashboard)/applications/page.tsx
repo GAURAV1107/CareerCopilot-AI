@@ -29,6 +29,8 @@ import {
   Globe,
   IndianRupee,
 } from "lucide-react";
+import { generateTailoredResumePDF, type TailoredResumeData } from "@/lib/pdf-generator";
+import { downloadTailoredResumeDOCX } from "@/lib/resume-files";
 
 interface ApplicationItem {
   id: string;
@@ -73,6 +75,7 @@ interface ApplicationItem {
   jobMatches?: {
     overallScore: number;
   }[];
+  resume?: { id: string; filename: string; parsedText?: string } | null;
 }
 
 const STAGES = [
@@ -134,6 +137,7 @@ export default function ApplicationsPage() {
   const [followUpStatus, setFollowUpStatus] = useState("No");
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
+  const [tailoringId, setTailoringId] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -187,6 +191,16 @@ export default function ApplicationsPage() {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            companyName,
+            jobTitle,
+            jobUrl,
+            location,
+            salaryMin,
+            salaryMax,
+            currency,
+            workMode,
+            source,
+            description,
             status,
             followUpStatus,
             recruiterName,
@@ -237,6 +251,26 @@ export default function ApplicationsPage() {
     }
   };
 
+  const handleTailoredDownload = async (application: ApplicationItem, format: "pdf" | "docx") => {
+    setTailoringId(application.id);
+    setMessage("");
+    try {
+      const response = await fetch("/api/ai/tailor-resume", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ applicationId: application.id }),
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "Unable to tailor the resume.");
+      const tailored = payload.tailoredData as TailoredResumeData;
+      const safeName = `${tailored.candidateName || "Candidate"}_Resume_${application.job.companyName}`.replace(/[^a-zA-Z0-9_-]+/g, "_");
+      if (format === "pdf") generateTailoredResumePDF(tailored).save(`${safeName}.pdf`);
+      else await downloadTailoredResumeDOCX(tailored, `${safeName}.docx`);
+      setMessage(`Tailored ${format.toUpperCase()} generated from the current primary resume.`);
+    } catch (error) {
+      setMessage(`Error: ${error instanceof Error ? error.message : String(error)}`);
+    } finally { setTailoringId(null); }
+  };
+
   // Delete Application after confirmation
   const handleConfirmDelete = async () => {
     if (!deletingApp) return;
@@ -263,11 +297,12 @@ export default function ApplicationsPage() {
     );
 
     try {
-      await fetch(`/api/applications/${appId}`, {
+      const res = await fetch(`/api/applications/${appId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
       });
+      if (!res.ok) throw new Error("Failed to update application status.");
     } catch (err) {
       console.error(err);
       fetchApplications();
@@ -280,11 +315,12 @@ export default function ApplicationsPage() {
     );
 
     try {
-      await fetch(`/api/applications/${appId}`, {
+      const res = await fetch(`/api/applications/${appId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ followUpStatus: newFollowUpStatus }),
       });
+      if (!res.ok) throw new Error("Failed to update follow-up status.");
     } catch (err) {
       console.error(err);
       fetchApplications();
@@ -730,16 +766,16 @@ export default function ApplicationsPage() {
                             </select>
                           </div>
 
-                          {/* Download AI-Tailored Resume PDF Button */}
-                          <a
-                            href={`/api/applications/${app.id}/tailored-resume-pdf`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="w-full bg-violet-600/20 hover:bg-violet-600/30 text-violet-300 border border-violet-500/30 font-semibold py-1.5 px-2.5 rounded-lg transition text-[11px] flex items-center justify-center gap-1.5"
-                          >
-                            <FileText className="h-3.5 w-3.5 text-violet-400" />
-                            <span>Download AI-Tailored Resume (PDF)</span>
-                          </a>
+                          <div className="grid grid-cols-2 gap-2">
+                            <button type="button" onClick={() => handleTailoredDownload(app, "pdf")} disabled={tailoringId === app.id}
+                              className="bg-violet-600/20 hover:bg-violet-600/30 disabled:opacity-50 text-violet-300 border border-violet-500/30 font-semibold py-1.5 px-2 rounded-lg text-[11px] flex items-center justify-center gap-1">
+                              <FileText className="h-3.5 w-3.5" /> {tailoringId === app.id ? "Generating..." : "Tailored PDF"}
+                            </button>
+                            <button type="button" onClick={() => handleTailoredDownload(app, "docx")} disabled={tailoringId === app.id}
+                              className="bg-blue-600/20 hover:bg-blue-600/30 disabled:opacity-50 text-blue-300 border border-blue-500/30 font-semibold py-1.5 px-2 rounded-lg text-[11px] flex items-center justify-center gap-1">
+                              <FileText className="h-3.5 w-3.5" /> Editable DOCX
+                            </button>
+                          </div>
 
                           {/* Quick Stage Mover */}
                           <div className="flex items-center justify-between pt-1">
@@ -852,15 +888,18 @@ export default function ApplicationsPage() {
                     {app.appliedDate && <div className="text-emerald-400">Applied: {formatDate(app.appliedDate)}</div>}
                   </td>
                   <td className="p-4 text-right space-x-2">
-                    <a
-                      href={`/api/applications/${app.id}/tailored-resume-pdf`}
-                      target="_blank"
-                      rel="noreferrer"
+                    <button
+                      onClick={() => handleTailoredDownload(app, "pdf")}
+                      disabled={tailoringId === app.id}
                       title="Download AI-Tailored Resume PDF"
                       className="p-1.5 bg-violet-500/10 hover:bg-violet-500/20 text-violet-300 rounded-lg border border-violet-500/20 inline-flex items-center gap-1 text-xs font-semibold"
                     >
                       <FileText className="h-3.5 w-3.5" /> PDF
-                    </a>
+                    </button>
+                    <button onClick={() => handleTailoredDownload(app, "docx")} disabled={tailoringId === app.id}
+                      className="p-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 rounded-lg border border-blue-500/20 inline-flex items-center gap-1 text-xs font-semibold">
+                      <FileText className="h-3.5 w-3.5" /> DOCX
+                    </button>
                     <button
                       onClick={() => handleOpenEdit(app)}
                       className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700 inline-flex items-center gap-1 text-xs"
@@ -1081,10 +1120,14 @@ export default function ApplicationsPage() {
               </div>
 
               {!editingApp && (
-                <div>
+                <div className="space-y-4">
+                  <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 p-3 text-[11px] text-blue-200">
+                    AI tailoring will use the current primary resume selected on the Resumes page.
+                  </div>
                   <label className="block font-semibold text-slate-300 mb-1">Job Description</label>
                   <textarea
                     rows={4}
+                    required
                     placeholder="Paste job description text here..."
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}

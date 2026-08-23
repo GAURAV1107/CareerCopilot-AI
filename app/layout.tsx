@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { LocalApiProvider } from "@/components/LocalApiProvider";
 
 export const metadata: Metadata = {
   title: "CareerCopilot AI – AI-Powered Job Application Tracker",
@@ -14,7 +15,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className="antialiased min-h-screen bg-slate-50 dark:bg-[#0b0f19] text-slate-900 dark:text-slate-100 selection:bg-blue-500 selection:text-white">
-        {children}
+        <LocalApiProvider>{children}</LocalApiProvider>
       </body>
     </html>
   );

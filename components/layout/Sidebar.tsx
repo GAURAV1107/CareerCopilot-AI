@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   KanbanSquare,
@@ -15,13 +15,11 @@ import {
   User,
   Settings,
   Bot,
-  LogOut,
   ChevronRight,
 } from "lucide-react";
 
 export function Sidebar() {
   const pathname = usePathname();
-  const router = useRouter();
 
   const [userName, setUserName] = useState("Manujendra Gaurav");
   const [userEmail, setUserEmail] = useState("manujendragaurav@gmail.com");
@@ -66,10 +64,6 @@ export function Sidebar() {
     { label: "Settings", href: "/settings", icon: Settings },
   ];
 
-  const handleLogout = async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/login");
-  };
 
   return (
     <aside className="w-64 bg-slate-900/95 dark:bg-slate-900 border-r border-slate-800 flex flex-col h-screen sticky top-0 z-40">
@@ -118,9 +112,9 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* Active User Profile Badge & Logout */}
+      {/* Local profile summary */}
       <div className="p-4 border-t border-slate-800 bg-slate-950/40">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center">
           <div className="flex items-center gap-3 overflow-hidden">
             <div className="h-8 w-8 rounded-full bg-blue-600/20 flex items-center justify-center text-xs font-bold text-blue-300 border border-blue-500/30 shrink-0">
               {getInitials(userName)}
@@ -130,13 +124,6 @@ export function Sidebar() {
               <p className="text-[10px] text-slate-400 truncate">{userEmail}</p>
             </div>
           </div>
-          <button
-            onClick={handleLogout}
-            title="Logout"
-            className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-slate-800 transition shrink-0"
-          >
-            <LogOut className="h-4 w-4" />
-          </button>
         </div>
       </div>
     </aside>
