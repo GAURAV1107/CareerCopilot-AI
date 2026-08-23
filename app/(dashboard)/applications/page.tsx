@@ -26,6 +26,8 @@ import {
   Upload,
   X,
   AlertTriangle,
+  Globe,
+  IndianRupee,
 } from "lucide-react";
 
 interface ApplicationItem {
@@ -88,6 +90,18 @@ const STAGES = [
   "Withdrawn",
 ];
 
+const WORK_MODES = ["Remote", "Hybrid", "Onsite"];
+const JOB_SOURCES = [
+  "LinkedIn",
+  "Indeed",
+  "Naukri",
+  "Glassdoor",
+  "Company Website",
+  "Recruiter Reachout",
+  "Employee Referral",
+  "Other",
+];
+
 export default function ApplicationsPage() {
   const [applications, setApplications] = useState<ApplicationItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -106,9 +120,12 @@ export default function ApplicationsPage() {
   const [companyName, setCompanyName] = useState("");
   const [jobTitle, setJobTitle] = useState("");
   const [jobUrl, setJobUrl] = useState("");
-  const [location, setLocation] = useState("San Francisco, CA");
-  const [salaryMin, setSalaryMin] = useState("140000");
-  const [salaryMax, setSalaryMax] = useState("170000");
+  const [location, setLocation] = useState("Bengaluru, India");
+  const [salaryMin, setSalaryMin] = useState("2400000");
+  const [salaryMax, setSalaryMax] = useState("3000000");
+  const [currency, setCurrency] = useState("INR");
+  const [workMode, setWorkMode] = useState("Remote");
+  const [source, setSource] = useState("LinkedIn");
   const [description, setDescription] = useState("");
   const [recruiterName, setRecruiterName] = useState("");
   const [recruiterEmail, setRecruiterEmail] = useState("");
@@ -144,9 +161,12 @@ export default function ApplicationsPage() {
     setCompanyName(app.job.companyName);
     setJobTitle(app.job.jobTitle);
     setJobUrl(app.job.jobUrl || "");
-    setLocation(app.job.location || "San Francisco, CA");
+    setLocation(app.job.location || "Bengaluru, India");
     setSalaryMin(app.job.salaryMin ? String(app.job.salaryMin) : "");
     setSalaryMax(app.job.salaryMax ? String(app.job.salaryMax) : "");
+    setCurrency(app.job.currency || "INR");
+    setWorkMode(app.job.workMode || "Remote");
+    setSource(app.job.source || "LinkedIn");
     setDescription(app.job.description || "");
     setRecruiterName(app.recruiterName || "");
     setRecruiterEmail(app.recruiterEmail || "");
@@ -190,6 +210,9 @@ export default function ApplicationsPage() {
             location,
             salaryMin,
             salaryMax,
+            currency,
+            workMode,
+            source,
             description,
             recruiterName,
             recruiterEmail,
@@ -278,8 +301,9 @@ export default function ApplicationsPage() {
       location: app.job.location,
       salaryMin: app.job.salaryMin,
       salaryMax: app.job.salaryMax,
-      currency: app.job.currency,
-      workMode: app.job.workMode,
+      currency: app.job.currency || "INR",
+      workMode: app.job.workMode || "Remote",
+      source: app.job.source || "LinkedIn",
       status: app.status,
       followUpStatus: app.followUpStatus || "No",
       recruiterName: app.recruiterName,
@@ -368,12 +392,21 @@ export default function ApplicationsPage() {
     });
   };
 
-  const formatSalary = (min?: number, max?: number, currency = "USD") => {
+  // Format Salary in INR (₹) or LPA
+  const formatSalary = (min?: number, max?: number, curr = "INR") => {
     if (!min && !max) return null;
-    const symbol = currency === "USD" ? "$" : currency;
-    if (min && max) return `${symbol}${(min / 1000).toFixed(0)}k - ${symbol}${(max / 1000).toFixed(0)}k`;
-    if (min) return `${symbol}${(min / 1000).toFixed(0)}k+`;
-    return `Up to ${symbol}${(max! / 1000).toFixed(0)}k`;
+
+    const formatVal = (val: number) => {
+      if (val >= 100000) {
+        const lpa = (val / 100000).toFixed(1).replace(/\.0$/, "");
+        return `₹${lpa} LPA`;
+      }
+      return `₹${val.toLocaleString("en-IN")}`;
+    };
+
+    if (min && max) return `${formatVal(min)} - ${formatVal(max)}`;
+    if (min) return `${formatVal(min)}+`;
+    return `Up to ${formatVal(max!)}`;
   };
 
   if (loading) return <div className="p-8 text-center text-slate-400 text-xs">Loading Job Tracker Pipeline...</div>;
@@ -388,7 +421,7 @@ export default function ApplicationsPage() {
         <div>
           <h1 className="text-2xl font-bold text-white tracking-tight">Job Application Tracker</h1>
           <p className="text-xs text-slate-400">
-            Manage your 12-stage application pipeline with full CRUD operations, JSON import/export, and recruiter tracking.
+            Manage your 12-stage application pipeline with Work Mode (Remote/Hybrid), Job Source, INR Salary formatting, and AI recruiter tracking.
           </p>
         </div>
 
@@ -441,6 +474,9 @@ export default function ApplicationsPage() {
               setRecruiterName("");
               setRecruiterEmail("");
               setReferralDetails("");
+              setWorkMode("Remote");
+              setSource("LinkedIn");
+              setCurrency("INR");
               setShowAddModal(true);
             }}
             className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-lg shadow-blue-600/30 transition flex items-center gap-2"
@@ -529,9 +565,9 @@ export default function ApplicationsPage() {
                   const scoreB = b.jobMatches?.[0]?.overallScore || 0;
                   return scoreB - scoreA;
                 }
-                // Default: Newest First
                 return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
               });
+
             return (
               <div
                 key={stage}
@@ -596,14 +632,26 @@ export default function ApplicationsPage() {
                             </div>
                           </div>
 
-                          {/* Match Score Badge */}
-                          {matchScore !== undefined && (
-                            <div className="inline-block text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                              {matchScore}% Match Score
-                            </div>
-                          )}
+                          {/* Work Mode & Source Badges */}
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            {app.job.workMode && (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-500/10 text-blue-300 border border-blue-500/20">
+                                💻 {app.job.workMode}
+                              </span>
+                            )}
+                            {app.job.source && (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-violet-500/10 text-violet-300 border border-violet-500/20">
+                                🌐 {app.job.source}
+                              </span>
+                            )}
+                            {matchScore !== undefined && (
+                              <span className="text-[10px] font-extrabold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                {matchScore}% Match
+                              </span>
+                            )}
+                          </div>
 
-                          {/* Dates & Salary Badges */}
+                          {/* Dates & INR Salary Badges */}
                           <div className="space-y-1.5 text-[11px] text-slate-400">
                             <div className="flex items-center justify-between">
                               <span className="flex items-center gap-1">
@@ -617,8 +665,7 @@ export default function ApplicationsPage() {
                             </div>
 
                             {salaryText && (
-                              <div className="flex items-center gap-1 text-slate-300 font-semibold">
-                                <DollarSign className="h-3 w-3 text-emerald-400" />
+                              <div className="flex items-center gap-1 text-emerald-400 font-bold text-xs">
                                 <span>{salaryText}</span>
                               </div>
                             )}
@@ -724,10 +771,11 @@ export default function ApplicationsPage() {
             <thead className="bg-slate-950 text-slate-400 font-semibold border-b border-slate-800">
               <tr>
                 <th className="p-4">Company & Job Title</th>
+                <th className="p-4">Work Mode & Source</th>
                 <th className="p-4">Pipeline Stage</th>
-                <th className="p-4">Follow Up Required?</th>
-                <th className="p-4">HR / Recruiter Contact</th>
-                <th className="p-4">Salary Range</th>
+                <th className="p-4">Follow Up?</th>
+                <th className="p-4">HR Contact</th>
+                <th className="p-4">Salary (INR)</th>
                 <th className="p-4">Dates</th>
                 <th className="p-4 text-right">Actions</th>
               </tr>
@@ -745,6 +793,16 @@ export default function ApplicationsPage() {
                         View Job Post →
                       </a>
                     )}
+                  </td>
+                  <td className="p-4">
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-500/10 text-blue-300 border border-blue-500/20 block w-fit">
+                        {app.job.workMode || "Remote"}
+                      </span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-violet-500/10 text-violet-300 border border-violet-500/20 block w-fit">
+                        {app.job.source || "LinkedIn"}
+                      </span>
+                    </div>
                   </td>
                   <td className="p-4">
                     <select
@@ -786,7 +844,7 @@ export default function ApplicationsPage() {
                       <span className="text-slate-500 italic">None logged</span>
                     )}
                   </td>
-                  <td className="p-4 font-semibold text-emerald-400">
+                  <td className="p-4 font-bold text-emerald-400">
                     {formatSalary(app.job.salaryMin, app.job.salaryMax, app.job.currency) || "N/A"}
                   </td>
                   <td className="p-4 text-[11px] text-slate-400">
@@ -851,7 +909,7 @@ export default function ApplicationsPage() {
                     type="text"
                     required
                     disabled={!!editingApp}
-                    placeholder="e.g. CloudScale Systems"
+                    placeholder="e.g. DataArt Technologies"
                     value={companyName}
                     onChange={(e) => setCompanyName(e.target.value)}
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-blue-500 disabled:opacity-60"
@@ -864,7 +922,7 @@ export default function ApplicationsPage() {
                     type="text"
                     required
                     disabled={!!editingApp}
-                    placeholder="e.g. Senior SDET"
+                    placeholder="e.g. Senior QA Automation Engineer"
                     value={jobTitle}
                     onChange={(e) => setJobTitle(e.target.value)}
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-blue-500 disabled:opacity-60"
@@ -886,6 +944,40 @@ export default function ApplicationsPage() {
                 />
               </div>
 
+              {/* Work Mode & Job Source Dropdowns */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-semibold text-slate-300 mb-1">Work Mode Dropdown *</label>
+                  <select
+                    value={workMode}
+                    onChange={(e) => setWorkMode(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-white font-semibold focus:outline-none focus:border-blue-500"
+                  >
+                    {WORK_MODES.map((mode) => (
+                      <option key={mode} value={mode}>
+                        {mode}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-slate-300 mb-1">Job Source Dropdown *</label>
+                  <select
+                    value={source}
+                    onChange={(e) => setSource(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-white font-semibold focus:outline-none focus:border-blue-500"
+                  >
+                    {JOB_SOURCES.map((src) => (
+                      <option key={src} value={src}>
+                        {src}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Location & Salary in INR (₹) */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block font-semibold text-slate-300 mb-1">Location</label>
@@ -898,22 +990,24 @@ export default function ApplicationsPage() {
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-slate-300 mb-1">Min Salary ($)</label>
+                  <label className="block font-semibold text-slate-300 mb-1">Min Salary (INR ₹)</label>
                   <input
                     type="number"
+                    placeholder="e.g. 2400000 (24 LPA)"
                     value={salaryMin}
                     onChange={(e) => setSalaryMin(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-white"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-white font-mono"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-slate-300 mb-1">Max Salary ($)</label>
+                  <label className="block font-semibold text-slate-300 mb-1">Max Salary (INR ₹)</label>
                   <input
                     type="number"
+                    placeholder="e.g. 3000000 (30 LPA)"
                     value={salaryMax}
                     onChange={(e) => setSalaryMax(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-white"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-white font-mono"
                   />
                 </div>
               </div>
